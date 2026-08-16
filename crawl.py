@@ -1,7 +1,12 @@
 from typing import TypedDict
 from urllib.parse import urljoin, urlsplit
 
+import requests
 from bs4 import BeautifulSoup, Tag
+
+
+class UnsupportedContentTypeError(Exception):
+    pass
 
 
 class PageData(TypedDict):
@@ -70,6 +75,19 @@ def get_images_from_html(html: str, base_url: str) -> list[str]:
     return images
 
 
+def get_html(url: str) -> str | requests.exceptions.RequestException:
+    try:
+        r = requests.get(url, headers={"User-Agent": "BootCrawler/1.0"}, timeout=30)
+        r.raise_for_status()
+        if r.headers.get("content-type", "").split(";")[0].strip() != "text/html":
+            print(r.headers.get("content-type"))
+            raise ValueError("Incorrect content-type")
+    except requests.exceptions.RequestException as e:
+        return e
+
+    return r.text
+
+
 def extract_page_data(html: str, page_url: str) -> PageData:
     return {
         "url": page_url,
@@ -78,3 +96,41 @@ def extract_page_data(html: str, page_url: str) -> PageData:
         "outgoing_links": get_urls_from_html(html, page_url),
         "image_urls": get_images_from_html(html, page_url),
     }
+
+
+def crawl_page(
+    base_url: str,
+    current_url: str | None = None,
+    page_data: dict[str, PageData] | None = None,
+) -> dict[str, PageData]:
+    if current_url is None:
+        current_url = base_url
+    if page_data is None:
+        page_data = {}
+
+    base_hostname = urlsplit(base_url).hostname
+    current_hostname = urlsplit(current_url).hostname
+
+    if current_hostname != base_hostname:
+        return page_data
+
+    normalized_url = normalize_url(current_url)
+
+    if normalized_url in page_data:
+        return page_data
+
+    html = get_html(current_url)
+    if isinstance(html, requests.exceptions.RequestException):
+        return page_data
+
+    print(f"crawling: {current_url}")
+    page_data[normalized_url] = extract_page_data(html, current_url)
+
+    urls = page_data[normalized_url].get("outgoing_links", None)
+    if not urls:
+        return page_data
+
+    for url in urls:
+        crawl_page(base_url, url, page_data)
+
+    return page_data

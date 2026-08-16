@@ -22,3 +22,8 @@ project-includes = [
     "**/*.py*",
     "**/*.ipynb",
 ]
+
+[dependency-groups]
+dev = [
+    "types-requests>=2.33.0.20260712",
+]
