@@ -98,7 +98,6 @@ class AsyncCrawler:
 
         async with self.semaphore:
             html = await self.get_html(current_url)
-            print(f"starting crawl of {current_url}")
             if html is None:
                 return
 
@@ -197,7 +196,6 @@ def get_html(url: str) -> str | requests.exceptions.RequestException:
         r = requests.get(url, headers={"User-Agent": "BootCrawler/1.0"}, timeout=30)
         r.raise_for_status()
         if r.headers.get("content-type", "").split(";")[0].strip() != "text/html":
-            print(r.headers.get("content-type"))
             raise ValueError("Incorrect content-type")
     except requests.exceptions.RequestException as e:
         return e
@@ -240,7 +238,6 @@ def crawl_page(
     if isinstance(html, requests.exceptions.RequestException):
         return page_data
 
-    print(f"crawling: {current_url}")
     page_data[normalized_url] = extract_page_data(html, current_url)
 
     urls = page_data[normalized_url].get("outgoing_links", None)

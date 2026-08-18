@@ -2,6 +2,7 @@ import asyncio
 import sys
 
 from crawl import crawl_site_async
+from json_report import write_json_report
 
 
 async def main() -> None:
@@ -27,10 +28,7 @@ async def main() -> None:
     if page_data is None:
         print("crawl failed")
         sys.exit(1)
-
-    print(f"Found {len(page_data)} pages:")
-    for page in page_data.values():
-        print(f"- {page['url']}: {len(page['outgoing_links'])} outgoing links")
+    write_json_report(page_data)
 
 
 if __name__ == "__main__":
