@@ -59,23 +59,38 @@ class AsyncCrawler:
     async def get_html(self, url: str) -> str | None:
         if self.session is None:
             return None
-        try:
-            async with self.session.get(
-                url, headers={"User-Agent": "BootCrawler/1.0"}
-            ) as r:
-                if r.status > 399:
-                    print(f"Error: HTTP {r.status} for {url}")
-                    return None
 
-                content_type = r.headers.get("content-type", "")
-                if content_type.split(";")[0].strip() != "text/html":
-                    print(f"Error: Non-HTML content {content_type} for {url}")
-                    return None
+        max_retries = 3
+        backoff = 30.0
 
-                return await r.text()
-        except Exception as e:
-            print(f"Error fetching {url}: {e}")
-            return None
+        for attempt in range(max_retries + 1):
+            try:
+                async with self.session.get(
+                    url, headers={"User-Agent": "BootCrawler/1.0"}
+                ) as r:
+                    if r.status == 429 and attempt < max_retries:
+                        retry_after = r.headers.get("Retry-After")
+                        delay = float(retry_after) if retry_after else backoff
+                        print(f"Rate limited on {url}, retrying in {delay:.1f}s")
+                        await asyncio.sleep(delay)
+                        backoff *= 2
+                        continue
+
+                    if r.status > 399:
+                        print(f"Error: HTTP {r.status} for {url}")
+                        return None
+
+                    content_type = r.headers.get("content-type", "")
+                    if content_type.split(";")[0].strip() != "text/html":
+                        print(f"Error: Non-HTML content {content_type} for {url}")
+                        return None
+
+                    return await r.text()
+            except Exception as e:
+                print(f"Error fetching {url}: {e}")
+                return None
+
+        return None
 
     async def crawl_page(
         self,
