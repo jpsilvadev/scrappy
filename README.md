@@ -18,14 +18,14 @@ uv sync
 ## Usage
 
 ```bash
-uv run main.py <base_url> <max_concurrency> <max_pages>
+uv run main.py --base_url <base_url> --max_concurrency <max_concurrency> --max_pages <max_pages> [--output FILENAME]
 ```
 
 Example:
 
 ```bash
-uv run main.py "https://learnwebscraping.dev/practice/ecommerce/" 3 50
+uv run main.py --base_url "https://learnwebscraping.dev/practice/ecommerce/" --max_concurrency 3 --max_pages 50
 ```
 
 This crawls up to 50 pages on `base_url` with up to 3 concurrent requests
-and writes the results to `report.json`.
+and writes the results to `report.json` (or the file passed via `--output`).
