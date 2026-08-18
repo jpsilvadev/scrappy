@@ -11,3 +11,4 @@ def write_json_report(
     data = sorted(page_data.values(), key=lambda p: p["url"])
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+    print(f"Report written to {filename}")

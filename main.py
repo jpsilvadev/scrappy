@@ -8,11 +8,11 @@ from json_report import write_json_report
 async def main() -> None:
     args = sys.argv
     if len(args) < 2:
-        print("no website provided")
+        print("usage: uv run main.py <base_url> <max_concurrency> <max_pages>")
         sys.exit(1)
 
     if len(args) > 4:
-        print("too many arguments provided")
+        print("usage: uv run main.py <base_url> <max_concurrency> <max_pages>")
         sys.exit(1)
 
     base_url = args[1]
@@ -24,10 +24,13 @@ async def main() -> None:
         print("Exiting...")
         sys.exit(1)
 
+    print(f"Starting crawl of: {base_url}")
     page_data = await crawl_site_async(base_url, max_concurrency, max_pages)
     if page_data is None:
-        print("crawl failed")
+        print("Crawl failed. No data retrieved.")
         sys.exit(1)
+
+    print(f"Crawl completed. Found {len(page_data)} pages.")
     write_json_report(page_data)
 
 
